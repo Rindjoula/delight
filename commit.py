@@ -11,6 +11,3 @@ class Commit:
         self.sha = sha
         self.date = date 
         self.contributor = contributor
-
-    def set_commits(commits):
-        commits = commits

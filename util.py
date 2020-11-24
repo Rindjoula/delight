@@ -6,6 +6,7 @@ def make_request(url, token, params=None):
     Parameters:
     url: url of the request
     token: authorization token
+    params: parameters of the request
 
     Returns:
     result of the request

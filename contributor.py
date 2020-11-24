@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import sys
 
 from util import make_request
-from util import write_to_json 
 
 
 class Contributor:
@@ -11,6 +10,7 @@ class Contributor:
         """
         Parameters:
         type: type of contributor (User, Anonymous)
+        contributions: number of contributions (commits) in the repo
         """
         self.type = type
         self.contributions = contributions
@@ -40,6 +40,12 @@ class UserContributor(Contributor):
 
 class AnonymousContributor(Contributor):
     def __init__(self, email, name, contributions=0):
+        """
+        Parameters:
+        email: email of the contributor
+        name: name of the contributor
+        contributions: number of contributions (commits) in the repo
+        """
         super().__init__("Anonymous", contributions)
         self.email = email
         self.name = name 
@@ -50,7 +56,9 @@ def get_contributor_from_dict(contributor):
     Paramaters:
     contributor: dictionary 
 
-    Returns: object UserContributor or AnonymousContributor
+    Returns:
+    object UserContributor or AnonymousContributor or nothing 
+    if contributor is null 
     """
 
     if contributor:
@@ -74,6 +82,9 @@ def get_contributor_from_dict(contributor):
 
 def get_contributors(token):
     """
+    Parameters:
+    token: authorization token
+
     Returns:
     list of Contributor objects
     """
@@ -124,6 +135,10 @@ def get_contributors(token):
 
 
 def read_json_contributors():
+    """
+    Returns:
+    json object with the contributors
+    """
     with open("contributors.json") as f:
         contributors = json.load(f)
 
@@ -131,6 +146,10 @@ def read_json_contributors():
 
 
 def visualize_contributions():
+    """
+    This function plots a circular diagram with contributions of
+    contributors. 
+    """
     contributors = read_json_contributors()
     anonymous = 0
     bots = 0
@@ -157,7 +176,6 @@ def visualize_contributions():
     plt.pie(values, labels=labels, autopct='%1.1f%%')
     plt.title("Contributions des contributeurs au repo facebook/react")
     plt.savefig("contributions.png")
-
 
 
 if __name__ == "__main__":

@@ -66,6 +66,7 @@ def write_commits_per_year(token, year):
     """
     Parameters:
     token: authorization token
+    year: the year we want the commits
     """
 
     day_delta = datetime.timedelta(days=1)
@@ -97,11 +98,8 @@ def get_critical_days():
     return critical_days
             
 
-def get_critical_days():
-
+def write_critical_days():
     critical_days = get_critical_days()
-    print(critical_days)
-    print(len(critical_days))
     write_to_json("critical_days.json", critical_days)
 
 
@@ -136,8 +134,8 @@ if __name__ == "__main__":
 
     token = sys.argv[1]
 
+    # Uncomment to load and write the daily commits 2020
     #write_commits_per_year(token, 2020)
 
-    # get_critical_days()
-
-    visualize_commits()
+    # Uncomment to get and write critical days
+    # write_critical_days()

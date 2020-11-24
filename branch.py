@@ -17,6 +17,11 @@ class Branch:
         self.last_commit = last_commit_sha
 
 def get_all_branches(token):
+    """
+    Parameters: 
+    token: authorization token
+    Returns: list of all the branches
+    """
     i = 0
     branches_list = []
 
@@ -27,12 +32,9 @@ def get_all_branches(token):
         }
         url = "https://api.github.com/repos/facebook/react/branches"
         branches = make_request(url, token, params=params)
-
-        #print(branches)
-
         if not branches:
             break
-
+        
         i += 1
 
         for branch in branches: 
@@ -43,7 +45,12 @@ def get_all_branches(token):
 
     return branches_list
 
+
 def get_all_branches_from_json():
+    """
+    Returns: 
+    json object with the branches
+    """
     with open("branches.json") as f:
         branches = json.load(f)
 
