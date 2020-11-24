@@ -5,6 +5,9 @@ import json
 import os 
 import sys
 
+
+import matplotlib.pyplot as plt
+
 from commit import Commit
 from contributor import get_contributor_from_dict
 from contributor import read_json_contributors
@@ -92,16 +95,38 @@ def get_critical_days():
             critical_days.append(critical_day)
 
     return critical_days
+            
 
-
-def analyze_commits():
+def get_critical_days():
 
     critical_days = get_critical_days()
     print(critical_days)
     print(len(critical_days))
     write_to_json("critical_days.json", critical_days)
-    
-    #visualize_commits()
+
+
+def visualize_commits():
+    for f in os.listdir("commits"):
+        contributors = {}
+        commits = read_from_json("commits/{}".format(f))
+        date = datetime.datetime(int(f[0:4]), int(f[4:6]), int(f[6:8]))
+        nb_commits = len(commits)
+        for commit in commits:
+            contributor = commit["contributor"]
+            if contributor:
+                if contributor["type"] == "User" or contributor["type"] == "Bot":
+                    c = contributor["login"]
+                else:
+                    c = contributor["email"]
+            else:
+                c = "unknown"
+            
+            if c not in contributors:
+                contributors[c] = 1
+            else:
+                contributors[c] += 1
+
+    # TODO: add graphics with contribution of each contributor (contributors) per day
 
 
 if __name__ == "__main__":
@@ -111,9 +136,8 @@ if __name__ == "__main__":
 
     token = sys.argv[1]
 
-    #day = datetime.datetime(2020, 8, 29) 
-    #commits = write_to_json_commits_per_day(token, day)
+    #write_commits_per_year(token, 2020)
 
-    write_commits_per_year(token, 2020)
+    # get_critical_days()
 
-    #analyze_commits()
+    visualize_commits()
