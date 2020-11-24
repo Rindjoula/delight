@@ -1,7 +1,7 @@
 import json 
 import requests 
 
-def make_request(url, token):
+def make_request(url, token, params=None):
     """
     Parameters:
     url: url of the request
@@ -12,7 +12,8 @@ def make_request(url, token):
     """
 
     headers = {"Authorization": "token {}".format(token)}
-    x = requests.get(url, headers=headers)
+    params = params
+    x = requests.get(url, headers=headers, params=params)
     return json.loads(x.text)
 
 
@@ -38,4 +39,4 @@ def write_to_json(file_output, list_obj):
     """
 
     with open(file_output, "w") as f:
-        json.dump(list_obj, f, default=lambda x: x.__dict__)
+        json.dump(list_obj, f, default=lambda x: x.__dict__, indent=0)
