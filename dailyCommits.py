@@ -1,3 +1,4 @@
+from branch import get_all_branches_from_json
 import calendar
 import datetime
 import json
@@ -12,50 +13,66 @@ from util import read_from_json
 from util import write_to_json
 
 
-def get_commits_per_contributor(token, contributor):
+def write_to_json_commits_per_day(token, day):
     """
-    Parameters: 
+    Parameters:
     token: authorization token
-    contributor: contributor for which we want their commits
-
-    Returns:
-    contributor name + list of commits
+    day: day of commits we want to retrieve
     """
-    if contributor.type == "User":
-            c = contributor.login
-            c_name = c
-    else:
-        c = contributor.email
-        c_name = contributor.name.replace(' ', '')
 
-    r = "https://api.github.com/repos/facebook/react/commits?author={}"\
-            .format(c)
-    
-    commits = make_request(r, token)
+    begin = day.replace(hour=0, minute=0, second=0)
+    begin = begin.strftime("%Y-%m-%dT%H:%M:%SZ")
+    end = day.replace(hour=23, minute=59, second=59)
+    end = end.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    file_output = day.strftime("%Y%m%d")
+
     commits_list = []
 
-    for commit in commits:
-        sha = commit["sha"]
-        date = commit["commit"]["author"]["date"]
-        commit_obj = Commit(sha, date, contributor)
-        commits_list.append(commit_obj)
+    i = 1
+    while True: 
+        params = {
+            "per_page": "100",
+            "page": str(i), 
+            "since": begin,
+            "until": end
+        }
+        url = "https://api.github.com/repos/facebook/react/commits"
+        commits = make_request(url, token, params=params)
+        print(commits)
+        if not commits: 
+            break
+        
+        i += 1
+        nb_commits = 0
+        for commit in commits:
+            sha = commit["sha"]
+            date = commit["commit"]["author"]["date"]
+            contributor = get_contributor_from_dict(commit["author"])
+            commit_obj = Commit(sha, date, contributor)
+            commits_list.append(commit_obj)
+            nb_commits += 1
 
-    return c_name, commits_list
+        if nb_commits < 100: 
+            break
 
+    write_to_json("commits/" + file_output + ".json", commits_list)
+    
 
-def get_write_commits(token):
+def write_commits_per_year(token, year):
     """
+    Parameters:
     token: authorization token
     """
-    with open("contributors.json") as f:
-        contributors = json.load(f)
 
-    for contributor in contributors:
-        contributor_obj = get_contributor_from_dict(contributor)
-        c_name, commits = get_commits_per_contributor(token, contributor_obj)
-        file_output = "commits/{}.json".format(c_name)
-        write_to_json(file_output, commits)
+    day_delta = datetime.timedelta(days=1)
+    start_date = datetime.datetime(year, 1, 1)
+    #end_date = datetime.datetime(year, 12, 31)
+    end_date = datetime.datetime.now()
+    end_date = end_date.replace(hour=0, minute=0, second=0, microsecond=0)
 
+    for i in range((end_date - start_date).days + 1):
+        write_to_json_commits_per_day(token, start_date + i*day_delta)
 
 
 def get_critical_days():
@@ -64,27 +81,15 @@ def get_critical_days():
     dictionary of days when there had less than 2 commits
     """
 
-    nb_commits_per_day = {}
-    commits_per_day = {}
+    critical_days = []
 
     for f in os.listdir("commits"):
         commits = read_from_json("commits/{}".format(f))
-        for commit in commits:
-            date = datetime.datetime.strptime(commit["date"], 
-                    "%Y-%m-%dT%H:%M:%S%z")
-            day = "{}-{}-{}".format(date.year, date.month, date.day)
-            if day not in commits_per_day:
-                nb_commits_per_day[day] = 1
-                commits_per_day[day] = [commit]
-            else:
-                nb_commits_per_day[day] += 1
-                commits_per_day[day].append(commit)
-    
-    critical_days = []
-
-    for k, v in nb_commits_per_day.items():
-        if v < 2:
-            critical_days.append((k, v))
+        if len(commits) < 2:
+            date = datetime.datetime(int(f[0:4]), int(f[4:6]), int(f[6:8]))
+            date_str = datetime.datetime.strftime(date, "%Y-%m-%d")
+            critical_day = {date_str: len(commits)}
+            critical_days.append(critical_day)
 
     return critical_days
 
@@ -92,20 +97,11 @@ def get_critical_days():
 def analyze_commits():
 
     critical_days = get_critical_days()
+    print(critical_days)
+    print(len(critical_days))
     write_to_json("critical_days.json", critical_days)
-
-    contributors = read_json_contributors()
     
-    nb_contributors = {}
-
-    for c in contributors:
-        if c["type"] == "User":
-            c_name = c["login"]
-        else: 
-            c_name = c["name"].replace(' ', '')
-        nb_contributors[c_name] = c["contributions"]
-
-    print(nb_contributors)
+    #visualize_commits()
 
 
 if __name__ == "__main__":
@@ -114,6 +110,10 @@ if __name__ == "__main__":
         exit(1)
 
     token = sys.argv[1]
-    get_write_commits(token)
 
-    analyze_commits()
+    #day = datetime.datetime(2020, 8, 29) 
+    #commits = write_to_json_commits_per_day(token, day)
+
+    write_commits_per_year(token, 2020)
+
+    #analyze_commits()
