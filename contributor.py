@@ -1,8 +1,9 @@
 import json
-from util import write_to_json 
+import matplotlib.pyplot as plt
 import sys
 
 from util import make_request
+from util import write_to_json 
 
 
 class Contributor:
@@ -117,7 +118,7 @@ def get_contributors(token):
                 )
                 
             
-            contributors_list.append(contributor_obj)
+                contributors_list.append(contributor_obj)
 
     return contributors_list
 
@@ -129,6 +130,36 @@ def read_json_contributors():
     return contributors
 
 
+def visualize_contributions():
+    contributors = read_json_contributors()
+    anonymous = 0
+    bots = 0
+    others = 0
+    labels = []
+    values = []
+    for contributor in contributors:
+        if contributor["type"] == "Anonymous":
+            anonymous += 1
+            contributors.remove(contributor)
+        elif contributor["type"] == "Bot":
+            bots += 1
+            contributors.remove(contributor)
+        elif contributor["contributions"] < 300:
+            others += 1
+            contributors.remove(contributor)
+        else:
+            labels.append(contributor["login"])
+            values.append(contributor["contributions"])
+
+    labels += ["anonymous", "bots", "others"]
+    values += [anonymous, bots, others]
+
+    plt.pie(values, labels=labels, autopct='%1.1f%%')
+    plt.title("Contributions des contributeurs au repo facebook/react")
+    plt.savefig("contributions.png")
+
+
+
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Please give an authentification token from github api")
@@ -136,5 +167,7 @@ if __name__ == "__main__":
     
     token = sys.argv[1]
 
-    contributors = get_contributors(token)
-    write_to_json("contributors.json", contributors)
+    #contributors = get_contributors(token)
+    #write_to_json("contributors.json", contributors)
+
+    #visualize_contributions()
